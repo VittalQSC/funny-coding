@@ -38,7 +38,7 @@ import './styles.css';
 // }
 
 
-function Box(props) {
+function Box({ isExpanded, ...props}) {
   // This reference will give us direct access to the mesh
   const mesh = useRef();
 
@@ -46,14 +46,15 @@ function Box(props) {
   const [hovered, setHover] = useState(false);
   const [active, setActive] = useState(false);
 
-  // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01));
+  // // Rotate mesh every frame, this is outside of React without overhead
+  // useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01));
 
   return (
     <mesh
       {...props}
       ref={mesh}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      rotation={[0.70, 0, 0]}
+      scale={(active || isExpanded) ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(e) => setActive(!active)}
       onPointerOver={(e) => setHover(true)}
       onPointerOut={(e) => setHover(false)}
@@ -82,38 +83,39 @@ function Box(props) {
 //   );
 // }
 
-function Bread({ ...props }) {
-  const url = '/bread.glb'
-  const { nodes } = useLoader(GLTFLoader, url);
-  const group = useRef();
+// function Bread({ ...props }) {
+//   const url = '/bread.glb'
+//   const { nodes } = useLoader(GLTFLoader, url);
+//   const group = useRef();
 
-  useFrame(() => (group.current.rotation.x = group.current.rotation.y += 0.01));
+//   useFrame(() => (group.current.rotation.x = group.current.rotation.y += 0.01));
 
 
-  return (
-    <group ref={group} dispose={null}
-      position={[0, 0, 0]}
-      scale={[20, 20, 20]}
-      >
-      <scene name="Scene" {...props}>
-        <mesh
-          name="default1"
-          {...nodes.default1}
-          // onPointerDown={(e) => {
-          // }}
-          // onPointerMove={(e) => {
-          //   console.log('MOVE', e.clientX, e.clientY, e);
-          //   console.log('ROTATION', group.current.rotation.x, group.current.rotation.y);
-          //   group.current.rotation.x -= e.movementX / 100;
-          //   group.current.rotation.y -= e.movementY / 100;
-          // }}
-        />
-      </scene>
-    </group>
-  )
-}
+//   return (
+//     <group ref={group} dispose={null}
+//       position={[0, 0, 0]}
+//       scale={[20, 20, 20]}
+//       >
+//       <scene name="Scene" {...props}>
+//         <mesh
+//           name="default1"
+//           {...nodes.default1}
+//           // onPointerDown={(e) => {
+//           // }}
+//           // onPointerMove={(e) => {
+//           //   console.log('MOVE', e.clientX, e.clientY, e);
+//           //   console.log('ROTATION', group.current.rotation.x, group.current.rotation.y);
+//           //   group.current.rotation.x -= e.movementX / 100;
+//           //   group.current.rotation.y -= e.movementY / 100;
+//           // }}
+//         />
+//       </scene>
+//     </group>
+//   )
+// }
 
 function App() {
+  const [isExpanded, setIsExpanded] = useState(false);
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -121,19 +123,12 @@ function App() {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Box position={[-1.2, 0, 0]} />
+          <Box position={[-1.2, 0, 0]} isExpanded={isExpanded} />
           <Box position={[1.2, 0, 0]} />
-          {
-            // <Sphere />
-          }
-          <Suspense fallback={null}>
-            {/* <Bird position={[20, 20, 20]} rotation={[0, Math.PI]} /> */}
-            {
-              // <Bread />
-            }
-          </Suspense>
         </Canvas>
       </section>
+
+      <button onClick={() => (setIsExpanded(!isExpanded))}>EXPAND</button>
     </div>
   );
 }
