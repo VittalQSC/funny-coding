@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, Suspense } from "react";
+import React, { useRef, useState, useEffect, useCallback, Suspense } from "react";
 import './App.css';
 
 import { Canvas, useFrame, useLoader } from "react-three-fiber";
@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // import GLTFLoader from 'three-gltf-loader';
 import './styles.css';
+import { Scene, Vector3, Vector2 } from "three";
 
 // // This component was auto-generated from GLTF by: https://github.com/react-spring/gltfjsx
 // function Bird({ ...props }) {
@@ -37,7 +38,6 @@ import './styles.css';
 //   )
 // }
 
-
 function Box({ isExpanded, ...props}) {
   // This reference will give us direct access to the mesh
   const mesh = useRef();
@@ -53,7 +53,7 @@ function Box({ isExpanded, ...props}) {
     <mesh
       {...props}
       ref={mesh}
-      rotation={[0.70, 0, 0]}
+      rotation={[0, 0, 0]}
       scale={(active || isExpanded) ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(e) => setActive(!active)}
       onPointerOver={(e) => setHover(true)}
@@ -114,8 +114,125 @@ function Box({ isExpanded, ...props}) {
 //   )
 // }
 
+
+// function Player({ ...props }) {
+//   // This reference will give us direct access to the mesh
+//   const mesh = useRef();
+
+//   // Set up state for the hovered and active state
+//   const [hovered, setHover] = useState(false);
+//   const [active, setActive] = useState(false);
+
+//   // // Rotate mesh every frame, this is outside of React without overhead
+//   // useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01));
+
+//   return (
+//     <mesh
+//       {...props}
+//       ref={mesh}
+//       rotation={[0, 0, 0]}
+//       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+//       onClick={(e) => setActive(!active)}
+//       onPointerOver={(e) => setHover(true)}
+//       onPointerOut={(e) => setHover(false)}
+//     >
+//       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
+//       <meshStandardMaterial
+//         attach="material"
+//         color={hovered ? "black" : "red"}
+//       />
+//     </mesh>
+//   );
+// }
+
+const directions = {
+  LEFT: 'LEFT',
+  RIGHT: 'RIGHT',
+  FRONT: 'FRONT',
+  BACK: 'BACK',
+};
+
+function useHookWithRefCallback() {
+  const ref = useRef(null)
+  const setRef = useCallback(node => {
+    if (node) {
+      node.rotation.x = 0.6;
+      node.rotation.y = -0.6;
+    }
+
+    ref.current = node;
+  }, [])
+
+  return [setRef, ref]
+}
+
+function useSmoothMove(group) {
+  const [newPos, setNewPos] = useState(group.current && group.current.position);
+  useFrame(() => {
+    if (!newPos) {
+      return;
+    }
+
+    const currPos = group.current.position.clone();
+    const inc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
+    if (inc.x || inc.y || inc.z) {
+      group.current.position.multiplyScalar(10).round().add(inc);
+      group.current.position.divideScalar(10);
+    }
+  })
+
+  return setNewPos
+}
+
+function delay(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  })
+}
+
+function CustomBox({ pos, ...props}) {
+  const speed = 0.75;
+  const group = useRef();
+  const { nodes, materials, animations } = useLoader(GLTFLoader, '/box.glb');
+
+  const [mixer] = useState(() => new THREE.AnimationMixer());
+  useFrame((state, delta) => {
+    mixer.update(delta * speed);
+  })
+
+  const move = useSmoothMove(group);
+
+  useEffect(() => {
+    const animationAction = mixer.clipAction(animations[0], group.current);
+    animationAction.loop = THREE.LoopOnce;
+    animationAction.reset().play();
+    delay(200).then(() => move(pos));
+  }, [pos]);
+
+  return (<group ref={group} dispose={null} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
+      <mesh {...nodes.Cube}></mesh>
+    </group>);
+}
+
+function Playground({ pos }) {
+  const [setRef] = useHookWithRefCallback();
+  const [currPos, setCurrPos] = useState(pos)
+
+  useEffect(() => {
+    setCurrPos(pos);
+  }, [pos])
+  return (<group ref={setRef}>
+    <Box position={[0, 0, 0]} />
+    <Box position={[1, 0, 0]} />
+    <Box position={[2, 0, 0]} />
+    <Box position={[0, 0, 1]} />
+    <Suspense fallback={null}>
+      <CustomBox pos={currPos}  />
+    </Suspense>
+  </group>);
+}
 function App() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [playerPosition, setPlayerPosition] = useState([0, 0.5, 0]);
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -123,12 +240,22 @@ function App() {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Box position={[-1.2, 0, 0]} isExpanded={isExpanded} />
-          <Box position={[1.2, 0, 0]} />
+          <Playground pos={playerPosition} />
         </Canvas>
       </section>
 
-      <button onClick={() => (setIsExpanded(!isExpanded))}>EXPAND</button>
+      <button onClick={() => {
+        setPlayerPosition([playerPosition[0] + 1, playerPosition[1], playerPosition[2]]);
+      }}>FRONT</button>
+      <button onClick={() => {
+        setPlayerPosition([playerPosition[0] - 1, playerPosition[1], playerPosition[2]]);
+      }}>BACK</button>
+      <button onClick={() => {
+        setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] + 1]);
+      }}>RIGHT</button>
+      <button onClick={() => {
+        setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] - 1]);
+      }}>LEFT</button>
     </div>
   );
 }
