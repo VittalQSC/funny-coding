@@ -6,37 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // import GLTFLoader from 'three-gltf-loader';
 import './styles.css';
-import { Scene, Vector3, Vector2 } from "three";
-
-// // This component was auto-generated from GLTF by: https://github.com/react-spring/gltfjsx
-// function Bird({ ...props }) {
-//   const speed = 0.75;
-//   const factor = 0.25;
-//   const url = '/Parrot.glb'
-//   const { nodes, materials, animations } = useLoader(GLTFLoader, url);
-//   const group = useRef();
-//   const [mixer] = useState(() => new THREE.AnimationMixer());
-//   useEffect(() => void mixer.clipAction(animations[0], group.current).play(), []);
-//   useFrame((state, delta) => {
-//     group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
-//     mixer.update(delta * speed)
-//   })
-//   return (
-//     <group ref={group} dispose={null} scale={[1, 1, 1]}>
-//       {/* <scene name="Scene" {...props}> */}
-//         <mesh
-//           name="Object_0"
-//           rotation={[1.5707964611537577, 0, 0]}
-//           // morphTargetDictionary={nodes.Object_0.morphTargetDictionary}
-//           // morphTargetInfluences={nodes.Object_0.morphTargetInfluences}
-//           // geometry={nodes.Object_0.geometry}
-//           material={materials.Material_0_COLOR_0}
-//           {...nodes.Object_0}
-//         />
-//       {/* </scene> */}
-//     </group>
-//   )
-// }
+import { Scene, Vector3 } from "three";
 
 function Box({ isExpanded, ...props}) {
   // This reference will give us direct access to the mesh
@@ -68,90 +38,6 @@ function Box({ isExpanded, ...props}) {
   );
 }
 
-// function Sphere() {
-//   return (
-//     <mesh visible userData={{ test: "hello" }} position={[0, 0, 0]} castShadow>
-//       <sphereGeometry attach="geometry" args={[1, 16, 16]} />
-//       <meshStandardMaterial
-//         attach="material"
-//         color="white"
-//         transparent
-//         roughness={0.1}
-//         metalness={0.1}
-//       />
-//     </mesh>
-//   );
-// }
-
-// function Bread({ ...props }) {
-//   const url = '/bread.glb'
-//   const { nodes } = useLoader(GLTFLoader, url);
-//   const group = useRef();
-
-//   useFrame(() => (group.current.rotation.x = group.current.rotation.y += 0.01));
-
-
-//   return (
-//     <group ref={group} dispose={null}
-//       position={[0, 0, 0]}
-//       scale={[20, 20, 20]}
-//       >
-//       <scene name="Scene" {...props}>
-//         <mesh
-//           name="default1"
-//           {...nodes.default1}
-//           // onPointerDown={(e) => {
-//           // }}
-//           // onPointerMove={(e) => {
-//           //   console.log('MOVE', e.clientX, e.clientY, e);
-//           //   console.log('ROTATION', group.current.rotation.x, group.current.rotation.y);
-//           //   group.current.rotation.x -= e.movementX / 100;
-//           //   group.current.rotation.y -= e.movementY / 100;
-//           // }}
-//         />
-//       </scene>
-//     </group>
-//   )
-// }
-
-
-// function Player({ ...props }) {
-//   // This reference will give us direct access to the mesh
-//   const mesh = useRef();
-
-//   // Set up state for the hovered and active state
-//   const [hovered, setHover] = useState(false);
-//   const [active, setActive] = useState(false);
-
-//   // // Rotate mesh every frame, this is outside of React without overhead
-//   // useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01));
-
-//   return (
-//     <mesh
-//       {...props}
-//       ref={mesh}
-//       rotation={[0, 0, 0]}
-//       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-//       onClick={(e) => setActive(!active)}
-//       onPointerOver={(e) => setHover(true)}
-//       onPointerOut={(e) => setHover(false)}
-//     >
-//       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-//       <meshStandardMaterial
-//         attach="material"
-//         color={hovered ? "black" : "red"}
-//       />
-//     </mesh>
-//   );
-// }
-
-const directions = {
-  LEFT: 'LEFT',
-  RIGHT: 'RIGHT',
-  FRONT: 'FRONT',
-  BACK: 'BACK',
-};
-
 function useHookWithRefCallback() {
   const ref = useRef(null)
   const setRef = useCallback(node => {
@@ -167,21 +53,33 @@ function useHookWithRefCallback() {
 }
 
 function useSmoothMove(group) {
-  const [newPos, setNewPos] = useState(group.current && group.current.position);
+  const [newPos, move] = useState(group.current && group.current.position);
+  const [newRot, rotate] = useState(group.current && group.current.rotation);
   useFrame(() => {
     if (!newPos) {
       return;
     }
 
     const currPos = group.current.position.clone();
-    const inc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
-    if (inc.x || inc.y || inc.z) {
-      group.current.position.multiplyScalar(10).round().add(inc);
+    const posInc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
+    if (posInc.x || posInc.y || posInc.z) {
+      group.current.position.multiplyScalar(10).round().add(posInc);
       group.current.position.divideScalar(10);
+    }
+
+    if (!newRot) {
+      return;
+    }
+
+    const currRot = group.current.rotation.clone();
+    const rotInc = (new Vector3(...newRot)).add(currRot.negate()).normalize();
+    if (rotInc.x || rotInc.y || rotInc.z) {
+      group.current.rotation.multiplyScalar(10).round().add(rotInc);
+      group.current.rotation.divideScalar(10);
     }
   })
 
-  return setNewPos
+  return { move, rotate }
 }
 
 function delay(ms) {
@@ -190,7 +88,7 @@ function delay(ms) {
   })
 }
 
-function CustomBox({ pos, ...props}) {
+function CustomBox({ pos, rot, ...props}) {
   const speed = 0.75;
   const group = useRef();
   const { nodes, materials, animations } = useLoader(GLTFLoader, '/box.glb');
@@ -200,7 +98,7 @@ function CustomBox({ pos, ...props}) {
     mixer.update(delta * speed);
   })
 
-  const move = useSmoothMove(group);
+  const { move, rotate } = useSmoothMove(group);
 
   useEffect(() => {
     const animationAction = mixer.clipAction(animations[0], group.current);
@@ -209,7 +107,7 @@ function CustomBox({ pos, ...props}) {
     delay(200).then(() => move(pos));
   }, [pos]);
 
-  return (<group ref={group} dispose={null} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
+  return (<group ref={group} dispose={null} rotation={[0, 0, 0]} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
       <mesh {...nodes.Cube}></mesh>
     </group>);
 }
@@ -231,6 +129,31 @@ function Playground({ pos }) {
     </Suspense>
   </group>);
 }
+
+function PlayerProgram() {
+  return (<section style={{
+    background: 'blue',
+    height: 100,
+    margin: '100px'
+  }}>
+    
+    </section>);
+}
+
+function MoveFrontIcon() {
+  return (<span style={{
+    width: 50,
+    height: 50,
+    display: 'inline-block',
+    background: 'orange',
+    textAlign: 'center',
+    verticalAllign: 'middle',
+    lineHeight: 3,
+  }}>
+    >
+  </span>);
+}
+
 function App() {
   const [playerPosition, setPlayerPosition] = useState([0, 0.5, 0]);
   return (
@@ -243,7 +166,10 @@ function App() {
           <Playground pos={playerPosition} />
         </Canvas>
       </section>
+      {/* <PlayerProgram />
+      <MoveFrontIcon /> */}
 
+      <br />
       <button onClick={() => {
         setPlayerPosition([playerPosition[0] + 1, playerPosition[1], playerPosition[2]]);
       }}>FRONT</button>
