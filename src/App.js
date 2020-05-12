@@ -54,28 +54,21 @@ function useHookWithRefCallback() {
 
 function useSmoothMove(group) {
   const [newPos, move] = useState(group.current && group.current.position);
-  const [newRot, rotate] = useState(group.current && group.current.rotation);
+  const [newQuat, rotate] = useState(
+    group.current && group.current.quaternion
+  );
   useFrame(() => {
-    if (!newPos) {
-      return;
+    if (newPos) {
+      const currPos = group.current.position.clone();
+      const posInc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
+      if (posInc.x || posInc.y || posInc.z) {
+        group.current.position.multiplyScalar(10).round().add(posInc);
+        group.current.position.divideScalar(10);
+      }
     }
 
-    const currPos = group.current.position.clone();
-    const posInc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
-    if (posInc.x || posInc.y || posInc.z) {
-      group.current.position.multiplyScalar(10).round().add(posInc);
-      group.current.position.divideScalar(10);
-    }
-
-    if (!newRot) {
-      return;
-    }
-
-    const currRot = group.current.rotation.clone();
-    const rotInc = (new Vector3(...newRot)).add(currRot.negate()).normalize();
-    if (rotInc.x || rotInc.y || rotInc.z) {
-      group.current.rotation.multiplyScalar(10).round().add(rotInc);
-      group.current.rotation.divideScalar(10);
+    if (newQuat) {
+      group.current.quaternion.rotateTowards(newQuat, 0.1);
     }
   })
 
@@ -88,7 +81,7 @@ function delay(ms) {
   })
 }
 
-function CustomBox({ pos, rot, ...props}) {
+function CustomBox({ pos, quat, ...props}) {
   const speed = 0.75;
   const group = useRef();
   const { nodes, materials, animations } = useLoader(GLTFLoader, '/box.glb');
@@ -107,12 +100,17 @@ function CustomBox({ pos, rot, ...props}) {
     delay(200).then(() => move(pos));
   }, [pos]);
 
+  useEffect(() => {
+    console.log('quat');
+    rotate(quat);
+  }, [quat])
+
   return (<group ref={group} dispose={null} rotation={[0, 0, 0]} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
       <mesh {...nodes.Cube}></mesh>
     </group>);
 }
 
-function Playground({ pos }) {
+function Playground({ pos, quat }) {
   const [setRef] = useHookWithRefCallback();
   const [currPos, setCurrPos] = useState(pos)
 
@@ -125,7 +123,7 @@ function Playground({ pos }) {
     <Box position={[2, 0, 0]} />
     <Box position={[0, 0, 1]} />
     <Suspense fallback={null}>
-      <CustomBox pos={currPos}  />
+      <CustomBox pos={currPos} quat={quat}  />
     </Suspense>
   </group>);
 }
@@ -156,6 +154,7 @@ function MoveFrontIcon() {
 
 function App() {
   const [playerPosition, setPlayerPosition] = useState([0, 0.5, 0]);
+  const [playerQuat, setPlayerQuat] = useState(new THREE.Quaternion());
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -163,25 +162,60 @@ function App() {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Playground pos={playerPosition} />
+          <Playground pos={playerPosition} quat={playerQuat} />
         </Canvas>
       </section>
       {/* <PlayerProgram />
       <MoveFrontIcon /> */}
 
       <br />
-      <button onClick={() => {
-        setPlayerPosition([playerPosition[0] + 1, playerPosition[1], playerPosition[2]]);
-      }}>FRONT</button>
-      <button onClick={() => {
-        setPlayerPosition([playerPosition[0] - 1, playerPosition[1], playerPosition[2]]);
-      }}>BACK</button>
-      <button onClick={() => {
-        setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] + 1]);
-      }}>RIGHT</button>
-      <button onClick={() => {
-        setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] - 1]);
-      }}>LEFT</button>
+      <button
+        onClick={() => {
+          setPlayerPosition([
+            playerPosition[0] + 1,
+            playerPosition[1],
+            playerPosition[2],
+          ]);
+        }}
+      >
+        FRONT
+      </button>
+      <button
+        onClick={() => {
+          setPlayerPosition([
+            playerPosition[0] - 1,
+            playerPosition[1],
+            playerPosition[2],
+          ]);
+        }}
+      >
+        BACK
+      </button>
+      <button
+        onClick={() => {
+          console.log(playerQuat);
+          var quaternion = new THREE.Quaternion();
+          quaternion.setFromAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            (3 * Math.PI) / 2
+          );
+          setPlayerQuat(quaternion);
+          // setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] + 1]);
+        }}
+      >
+        RIGHT
+      </button>
+      <button
+        onClick={() => {
+          setPlayerPosition([
+            playerPosition[0],
+            playerPosition[1],
+            playerPosition[2] - 1,
+          ]);
+        }}
+      >
+        LEFT
+      </button>
     </div>
   );
 }
