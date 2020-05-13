@@ -54,8 +54,8 @@ function useHookWithRefCallback() {
 
 function useSmoothMove(group) {
   const [newPos, move] = useState(group.current && group.current.position);
-  const [newQuat, rotate] = useState(
-    group.current && group.current.quaternion
+  const [newRotation, rotate] = useState(
+    group.current && group.current.rotation
   );
   useFrame(() => {
     if (newPos) {
@@ -67,8 +67,13 @@ function useSmoothMove(group) {
       }
     }
 
-    if (newQuat) {
-      group.current.quaternion.rotateTowards(newQuat, 0.1);
+    if (newRotation) {
+      const c = (newRotation[1] - group.current.rotation.y > 0 ? 1 : -1)
+      const inc = c * Math.PI / 20;
+      group.current.rotation.y += inc;
+      if (c * (newRotation[1] - group.current.rotation.y) < 0) {
+        group.current.rotation.y = newRotation[1];
+      }
     }
   })
 
@@ -81,7 +86,7 @@ function delay(ms) {
   })
 }
 
-function CustomBox({ pos, quat, ...props}) {
+function CustomBox({ pos, rot, ...props}) {
   const speed = 0.75;
   const group = useRef();
   const { nodes, materials, animations } = useLoader(GLTFLoader, '/box.glb');
@@ -101,16 +106,15 @@ function CustomBox({ pos, quat, ...props}) {
   }, [pos]);
 
   useEffect(() => {
-    console.log('quat');
-    rotate(quat);
-  }, [quat])
+    rotate(rot);
+  }, [rot])
 
   return (<group ref={group} dispose={null} rotation={[0, 0, 0]} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
       <mesh {...nodes.Cube}></mesh>
     </group>);
 }
 
-function Playground({ pos, quat }) {
+function Playground({ pos, rot }) {
   const [setRef] = useHookWithRefCallback();
   const [currPos, setCurrPos] = useState(pos)
 
@@ -123,7 +127,7 @@ function Playground({ pos, quat }) {
     <Box position={[2, 0, 0]} />
     <Box position={[0, 0, 1]} />
     <Suspense fallback={null}>
-      <CustomBox pos={currPos} quat={quat}  />
+      <CustomBox pos={currPos} rot={rot}  />
     </Suspense>
   </group>);
 }
@@ -154,7 +158,8 @@ function MoveFrontIcon() {
 
 function App() {
   const [playerPosition, setPlayerPosition] = useState([0, 0.5, 0]);
-  const [playerQuat, setPlayerQuat] = useState(new THREE.Quaternion());
+  // const [playerQuat, setPlayerQuat] = useState(new THREE.Quaternion());
+  const [playerRot, setPlayerRot] = useState([0, 0, 0]);
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -162,7 +167,7 @@ function App() {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Playground pos={playerPosition} quat={playerQuat} />
+          <Playground pos={playerPosition} rot={playerRot} />
         </Canvas>
       </section>
       {/* <PlayerProgram />
@@ -193,25 +198,18 @@ function App() {
       </button>
       <button
         onClick={() => {
-          console.log(playerQuat);
-          var quaternion = new THREE.Quaternion();
-          quaternion.setFromAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            (3 * Math.PI) / 2
-          );
-          setPlayerQuat(quaternion);
-          // setPlayerPosition([playerPosition[0], playerPosition[1], playerPosition[2] + 1]);
+          const newRot = [...playerRot];
+          newRot[1] += Math.PI / 2; 
+          setPlayerRot(newRot);
         }}
       >
         RIGHT
       </button>
       <button
         onClick={() => {
-          setPlayerPosition([
-            playerPosition[0],
-            playerPosition[1],
-            playerPosition[2] - 1,
-          ]);
+          const newRot = [...playerRot];
+          newRot[1] += -Math.PI / 2; 
+          setPlayerRot(newRot);
         }}
       >
         LEFT
