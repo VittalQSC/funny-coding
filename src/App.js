@@ -68,11 +68,20 @@ function useSmoothMove(group) {
     }
 
     if (newRotation) {
-      const c = (newRotation[1] - group.current.rotation.y > 0 ? 1 : -1)
+      let y = newRotation[1];
+
+      if (Math.abs(y - group.current.rotation.y) > Math.abs(y + 2 * Math.PI - group.current.rotation.y)) {
+        y += 2 * Math.PI;
+      }
+      if (Math.abs(y - group.current.rotation.y) > Math.abs(y - 2 * Math.PI - group.current.rotation.y)) {
+        y -= 2 * Math.PI;
+      }
+
+      const c = (y - group.current.rotation.y > 0 ? 1 : -1)
       const inc = c * Math.PI / 20;
       group.current.rotation.y += inc;
-      if (c * (newRotation[1] - group.current.rotation.y) < 0) {
-        group.current.rotation.y = newRotation[1];
+      if (c * (y - group.current.rotation.y) < 0) {
+        group.current.rotation.y = y % (2 * Math.PI);
       }
     }
   })
@@ -176,11 +185,13 @@ function App() {
       <br />
       <button
         onClick={() => {
-          setPlayerPosition([
+          const newPosition = [
             playerPosition[0] + 1,
             playerPosition[1],
             playerPosition[2],
-          ]);
+          ];
+          console.log(playerRot);
+          setPlayerPosition(newPosition);
         }}
       >
         FRONT
@@ -199,7 +210,8 @@ function App() {
       <button
         onClick={() => {
           const newRot = [...playerRot];
-          newRot[1] += Math.PI / 2; 
+          newRot[1] += Math.PI / 2;
+          newRot[1] = newRot[1] % (2 * Math.PI);
           setPlayerRot(newRot);
         }}
       >
@@ -208,7 +220,8 @@ function App() {
       <button
         onClick={() => {
           const newRot = [...playerRot];
-          newRot[1] += -Math.PI / 2; 
+          newRot[1] += -Math.PI / 2;
+          newRot[1] = newRot[1] % (2 * Math.PI); 
           setPlayerRot(newRot);
         }}
       >
