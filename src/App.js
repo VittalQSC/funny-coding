@@ -6,7 +6,12 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // import GLTFLoader from 'three-gltf-loader';
 import './styles.css';
-import { Scene, Vector3 } from "three";
+
+import { usePlayerController } from './hooks/usePlayerController'
+import { useHookWithRefCallback } from './hooks/useHookWithRefCallback'
+import { useSmoothMove } from './hooks/useSmoothMove'
+
+import { delay } from './utils'
 
 function Box({ isExpanded, ...props}) {
   // This reference will give us direct access to the mesh
@@ -36,63 +41,6 @@ function Box({ isExpanded, ...props}) {
       />
     </mesh>
   );
-}
-
-function useHookWithRefCallback() {
-  const ref = useRef(null)
-  const setRef = useCallback(node => {
-    if (node) {
-      node.rotation.x = 0.6;
-      node.rotation.y = -0.6;
-    }
-
-    ref.current = node;
-  }, [])
-
-  return [setRef, ref]
-}
-
-function useSmoothMove(group) {
-  const [newPos, move] = useState(group.current && group.current.position);
-  const [newRotation, rotate] = useState(
-    group.current && group.current.rotation
-  );
-  useFrame(() => {
-    if (newPos) {
-      const currPos = group.current.position.clone();
-      const posInc = (new Vector3(...newPos)).add(currPos.negate()).normalize();
-      if (posInc.x || posInc.y || posInc.z) {
-        group.current.position.multiplyScalar(10).round().add(posInc);
-        group.current.position.divideScalar(10);
-      }
-    }
-
-    if (newRotation) {
-      let y = newRotation[1];
-
-      if (Math.abs(y - group.current.rotation.y) > Math.abs(y + 2 * Math.PI - group.current.rotation.y)) {
-        y += 2 * Math.PI;
-      }
-      if (Math.abs(y - group.current.rotation.y) > Math.abs(y - 2 * Math.PI - group.current.rotation.y)) {
-        y -= 2 * Math.PI;
-      }
-
-      const c = (y - group.current.rotation.y > 0 ? 1 : -1)
-      const inc = c * Math.PI / 20;
-      group.current.rotation.y += inc;
-      if (c * (y - group.current.rotation.y) < 0) {
-        group.current.rotation.y = y % (2 * Math.PI);
-      }
-    }
-  })
-
-  return { move, rotate }
-}
-
-function delay(ms) {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms);
-  })
 }
 
 function CustomBox({ pos, rot, ...props}) {
@@ -139,90 +87,6 @@ function Playground({ pos, rot }) {
       <CustomBox pos={currPos} rot={rot}  />
     </Suspense>
   </group>);
-}
-
-function PlayerProgram() {
-  return (<section style={{
-    background: 'blue',
-    height: 100,
-    margin: '100px'
-  }}>
-    
-    </section>);
-}
-
-function MoveFrontIcon() {
-  return (<span style={{
-    width: 50,
-    height: 50,
-    display: 'inline-block',
-    background: 'orange',
-    textAlign: 'center',
-    verticalAllign: 'middle',
-    lineHeight: 3,
-  }}>
-    >
-  </span>);
-};
-
-function usePlayerController(initialPosition = [0, 0.5, 0], initialRotation = [0, 0, 0]) {
-  const [player, updatePlayer] = useState({
-    position: initialPosition,
-    rotation: initialRotation
-  });
-
-  return {
-    player,
-
-    goFront: () => {
-      const pis = player.rotation[1] / Math.PI;
-      let [xInc, yInc] = [0, 0];
-      xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
-      yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
-      const newPosition = [
-        player.position[0] + xInc,
-        player.position[1],
-        player.position[2] + yInc,
-      ];
-      updatePlayer({
-        ...player,
-        position: newPosition,
-      });
-    },
-    goBack: () => {
-      const pis = player.rotation[1] / Math.PI;
-      let [xInc, yInc] = [0, 0];
-      xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
-      yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
-      const newPosition = [
-        player.position[0] - xInc,
-        player.position[1],
-        player.position[2] - yInc,
-      ];
-      updatePlayer({
-        ...player,
-        position: newPosition
-      });
-    },
-    turnRight: () => {
-      const newRot = [...player.rotation];
-      newRot[1] += Math.PI / 2;
-      newRot[1] = newRot[1] % (2 * Math.PI);
-      updatePlayer({
-        ...player,
-        rotation: newRot
-      });
-    },
-    turnLeft: () => {
-      const newRot = [...player.rotation];
-      newRot[1] += -Math.PI / 2;
-      newRot[1] = newRot[1] % (2 * Math.PI); 
-      updatePlayer({
-        ...player,
-        rotation: newRot
-      });
-    }
-  };
 }
 
 function App() {
