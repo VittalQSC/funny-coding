@@ -163,12 +163,76 @@ function MoveFrontIcon() {
   }}>
     >
   </span>);
+};
+
+function usePlayerController(initialPosition = [0, 0.5, 0], initialRotation = [0, 0, 0]) {
+  const [player, updatePlayer] = useState({
+    position: initialPosition,
+    rotation: initialRotation
+  });
+
+  return {
+    player,
+
+    goFront: () => {
+      const pis = player.rotation[1] / Math.PI;
+      let [xInc, yInc] = [0, 0];
+      xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
+      yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
+      const newPosition = [
+        player.position[0] + xInc,
+        player.position[1],
+        player.position[2] + yInc,
+      ];
+      updatePlayer({
+        ...player,
+        position: newPosition,
+      });
+    },
+    goBack: () => {
+      const pis = player.rotation[1] / Math.PI;
+      let [xInc, yInc] = [0, 0];
+      xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
+      yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
+      const newPosition = [
+        player.position[0] - xInc,
+        player.position[1],
+        player.position[2] - yInc,
+      ];
+      updatePlayer({
+        ...player,
+        position: newPosition
+      });
+    },
+    turnRight: () => {
+      const newRot = [...player.rotation];
+      newRot[1] += Math.PI / 2;
+      newRot[1] = newRot[1] % (2 * Math.PI);
+      updatePlayer({
+        ...player,
+        rotation: newRot
+      });
+    },
+    turnLeft: () => {
+      const newRot = [...player.rotation];
+      newRot[1] += -Math.PI / 2;
+      newRot[1] = newRot[1] % (2 * Math.PI); 
+      updatePlayer({
+        ...player,
+        rotation: newRot
+      });
+    }
+  };
 }
 
 function App() {
-  const [playerPosition, setPlayerPosition] = useState([0, 0.5, 0]);
-  // const [playerQuat, setPlayerQuat] = useState(new THREE.Quaternion());
-  const [playerRot, setPlayerRot] = useState([0, 0, 0]);
+  const {
+      player,
+      goFront,
+      goBack,
+      turnRight,
+      turnLeft,
+  } = usePlayerController()
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -176,65 +240,17 @@ function App() {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Playground pos={playerPosition} rot={playerRot} />
+          <Playground pos={player.position} rot={player.rotation} />
         </Canvas>
       </section>
       {/* <PlayerProgram />
       <MoveFrontIcon /> */}
 
       <br />
-      <button
-        onClick={() => {
-          const pis = playerRot[1] / Math.PI;
-          let [xInc, yInc] = [0, 0];
-          xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
-          yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
-          const newPosition = [
-            playerPosition[0] + xInc,
-            playerPosition[1],
-            playerPosition[2] + yInc,
-          ];
-          console.log(playerRot);
-          setPlayerPosition(newPosition);
-        }}
-      >
-        FRONT
-      </button>
-      <button
-        onClick={() => {
-          const pis = playerRot[1] / Math.PI;
-          let [xInc, yInc] = [0, 0];
-          xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
-          yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
-          setPlayerPosition([
-            playerPosition[0] - xInc,
-            playerPosition[1],
-            playerPosition[2] - yInc,
-          ]);
-        }}
-      >
-        BACK
-      </button>
-      <button
-        onClick={() => {
-          const newRot = [...playerRot];
-          newRot[1] += Math.PI / 2;
-          newRot[1] = newRot[1] % (2 * Math.PI);
-          setPlayerRot(newRot);
-        }}
-      >
-        RIGHT
-      </button>
-      <button
-        onClick={() => {
-          const newRot = [...playerRot];
-          newRot[1] += -Math.PI / 2;
-          newRot[1] = newRot[1] % (2 * Math.PI); 
-          setPlayerRot(newRot);
-        }}
-      >
-        LEFT
-      </button>
+      <button onClick={goFront}>FRONT</button>
+      <button onClick={goBack}>BACK</button>
+      <button onClick={turnRight}>RIGHT</button>
+      <button onClick={turnLeft}>LEFT</button>
     </div>
   );
 }
