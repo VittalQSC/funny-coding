@@ -185,10 +185,14 @@ function App() {
       <br />
       <button
         onClick={() => {
+          const pis = playerRot[1] / Math.PI;
+          let [xInc, yInc] = [0, 0];
+          xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
+          yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
           const newPosition = [
-            playerPosition[0] + 1,
+            playerPosition[0] + xInc,
             playerPosition[1],
-            playerPosition[2],
+            playerPosition[2] + yInc,
           ];
           console.log(playerRot);
           setPlayerPosition(newPosition);
@@ -198,10 +202,14 @@ function App() {
       </button>
       <button
         onClick={() => {
+          const pis = playerRot[1] / Math.PI;
+          let [xInc, yInc] = [0, 0];
+          xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
+          yInc = (pis % 1 !== 0) ? (((pis + 0.5) % 2) ? -1 : 1) : 0;
           setPlayerPosition([
-            playerPosition[0] - 1,
+            playerPosition[0] - xInc,
             playerPosition[1],
-            playerPosition[2],
+            playerPosition[2] - yInc,
           ]);
         }}
       >
