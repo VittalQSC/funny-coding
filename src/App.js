@@ -89,6 +89,34 @@ function Playground({ pos, rot }) {
   </group>);
 }
 
+function Board({ commandTypes }) {
+
+  return (<div style={
+    {
+      background: 'lightblue',
+      margin: '0, 100px',
+      minHeight: 200
+    }
+  }>
+    {
+      commandTypes.map((type) => (
+        <Command type={type} />
+      ))
+    }
+  </div>);
+}
+
+function Command({ type }) {
+  const color = type === 'front' ? 'orange' : 'violet'
+  return (<span style={
+    {
+      background: color,
+      display: 'inline-block',
+      width: 50
+    }
+  }>{ type }</span>);
+}
+
 function App() {
   const {
       player,
@@ -107,14 +135,16 @@ function App() {
           <Playground pos={player.position} rot={player.rotation} />
         </Canvas>
       </section>
-      {/* <PlayerProgram />
-      <MoveFrontIcon /> */}
-
-      <br />
+      
       <button onClick={goFront}>FRONT</button>
       <button onClick={goBack}>BACK</button>
       <button onClick={turnRight}>RIGHT</button>
       <button onClick={turnLeft}>LEFT</button>
+      <br />
+      <Board commandTypes={[]} />
+      <Command type={'front'} />
+      <br />
+      <Command type={'back'} />
     </div>
   );
 }
