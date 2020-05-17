@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, Suspense } from "react";
+import { observer } from 'mobx-react'
 import './App.css';
 
 import { Canvas, useFrame, useLoader } from "react-three-fiber";
@@ -12,6 +13,7 @@ import { useHookWithRefCallback } from './hooks/useHookWithRefCallback'
 import { useSmoothMove } from './hooks/useSmoothMove'
 
 import { delay } from './utils'
+import { useStores } from "./hooks/useStores";
 
 const boxPositions = [
   [0, 0, 0],
@@ -144,7 +146,8 @@ function Command({ type, handleClick }) {
   onClick={() => handleClick(type)}>{ type }</span>);
 }
 
-function App() {
+function App(props) {
+  console.log('MobX store! ', useStores());
   const INITIAL_POSITION = [0, 0.5, 0];
   const INITIAL_ROTATION = [0, 0, 0];
   const {
@@ -196,4 +199,4 @@ function App() {
   );
 }
 
-export default App;
+export default observer(App);
