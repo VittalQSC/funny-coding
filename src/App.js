@@ -89,7 +89,7 @@ function Playground({ pos, rot }) {
   </group>);
 }
 
-function Board({ commandTypes }) {
+function Board({ commandTypes, setCommandTypes }) {
 
   return (<div style={
     {
@@ -99,32 +99,65 @@ function Board({ commandTypes }) {
     }
   }>
     {
-      commandTypes.map((type) => (
-        <Command type={type} />
+      commandTypes.map((type, index) => (
+        <Command key={index} type={type} handleClick={() => {
+          setCommandTypes(commandTypes.filter((type, typeI) => (typeI !== index)));
+        }} />
       ))
     }
   </div>);
 }
 
-function Command({ type }) {
-  const color = type === 'front' ? 'orange' : 'violet'
+function Command({ type, handleClick }) {
+  let color = 'orange';
+  switch (type) {
+    case 'front':
+      color = 'orange';
+      break;
+  
+    case 'back':
+      color = 'violet';
+      break;
+  
+    case 'left':
+    case 'right':
+      color = 'blue';
+      break;
+  
+    default:
+      break;
+  }
+  // const color = type === 'front' ? 'orange' : 'violet'
   return (<span style={
     {
       background: color,
       display: 'inline-block',
-      width: 50
+      border: '1px solid black',
+      width: 50,
     }
-  }>{ type }</span>);
+  }
+  onClick={() => handleClick(type)}>{ type }</span>);
 }
 
 function App() {
+  const INITIAL_POSITION = [0, 0.5, 0];
+  const INITIAL_ROTATION = [0, 0, 0];
   const {
       player,
-      goFront,
-      goBack,
-      turnRight,
-      turnLeft,
-  } = usePlayerController()
+      reset,
+      setChanges,
+  } = usePlayerController(INITIAL_POSITION, INITIAL_ROTATION)
+
+  const [commandTypes, setCommandTypes] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
+  useEffect(() => {
+    if (!isRunning) {
+      reset();
+      setCommandTypes([]);
+    } else {
+      setChanges(commandTypes);
+    }
+  }, [isRunning]);
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>
@@ -136,15 +169,23 @@ function App() {
         </Canvas>
       </section>
       
-      <button onClick={goFront}>FRONT</button>
-      <button onClick={goBack}>BACK</button>
-      <button onClick={turnRight}>RIGHT</button>
-      <button onClick={turnLeft}>LEFT</button>
+      <button onClick={() => {
+        setIsRunning(!isRunning);
+      }}>{isRunning ? 'STOP' : 'RUN'}</button>
       <br />
-      <Board commandTypes={[]} />
-      <Command type={'front'} />
-      <br />
-      <Command type={'back'} />
+      <Board commandTypes={commandTypes} setCommandTypes={(newTypes) => setCommandTypes(newTypes)} />
+      <Command type={'front'} handleClick={(type) => {
+        setCommandTypes(commandTypes.concat(type));
+      }} />
+      <Command type={'back'} handleClick={(type) => {
+        setCommandTypes(commandTypes.concat(type));
+      }} />
+      <Command type={'left'} handleClick={(type) => {
+        setCommandTypes(commandTypes.concat(type));
+      }} />
+      <Command type={'right'} handleClick={(type) => {
+        setCommandTypes(commandTypes.concat(type));
+      }} />
     </div>
   );
 }
