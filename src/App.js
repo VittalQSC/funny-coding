@@ -13,6 +13,13 @@ import { useSmoothMove } from './hooks/useSmoothMove'
 
 import { delay } from './utils'
 
+const boxPositions = [
+  [0, 0, 0],
+  [1, 0, 0],
+  [2, 0, 0],
+  [0, 0, 1],
+];
+
 function Box({ isExpanded, ...props}) {
   // This reference will give us direct access to the mesh
   const mesh = useRef();
@@ -56,6 +63,7 @@ function CustomBox({ pos, rot, ...props}) {
   const { move, rotate } = useSmoothMove(group);
 
   useEffect(() => {
+    console.log('pos change');
     const animationAction = mixer.clipAction(animations[0], group.current);
     animationAction.loop = THREE.LoopOnce;
     animationAction.reset().play();
@@ -79,10 +87,7 @@ function Playground({ pos, rot }) {
     setCurrPos(pos);
   }, [pos])
   return (<group ref={setRef}>
-    <Box position={[0, 0, 0]} />
-    <Box position={[1, 0, 0]} />
-    <Box position={[2, 0, 0]} />
-    <Box position={[0, 0, 1]} />
+    {boxPositions.map(boxPos => (<Box position={boxPos} />))}
     <Suspense fallback={null}>
       <CustomBox pos={currPos} rot={rot}  />
     </Suspense>
@@ -146,7 +151,7 @@ function App() {
       player,
       reset,
       setChanges,
-  } = usePlayerController(INITIAL_POSITION, INITIAL_ROTATION)
+  } = usePlayerController(INITIAL_POSITION, INITIAL_ROTATION, boxPositions)
 
   const [commandTypes, setCommandTypes] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -158,6 +163,7 @@ function App() {
       setChanges(commandTypes);
     }
   }, [isRunning]);
+
   return (
     <div className="App">
       <header className="App-header">Funny coding</header>

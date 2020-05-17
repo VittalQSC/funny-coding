@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { delay } from '../utils';
+import { delay, isEqual } from '../utils';
 
-export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotation = [0, 0, 0]) {
+export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotation = [0, 0, 0], availablePosition) {
     const [player, updatePlayer] = useState({
       position: initialPosition,
       rotation: initialRotation
@@ -9,8 +9,13 @@ export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotati
   
     const [arrayOfChanges, setArrayOfChanges] = useState([]);
 
+    const availableXYpositions = availablePosition.map(pos => [pos[0], pos[2]]);
+    const isAvailablePosition = (position) => {
+      const currXYpos = [position[0], position[2]];
+      return !!availableXYpositions.find(availablePos => isEqual(availablePos, currXYpos));
+    };
+
     const goFront = () => {
-      console.log('FRONT', player.position);
       const pis = player.rotation[1] / Math.PI;
       let [xInc, yInc] = [0, 0];
       xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
@@ -20,13 +25,16 @@ export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotati
         player.position[1],
         player.position[2] + yInc,
       ];
+      if (!isAvailablePosition(newPosition)) {
+        updatePlayer({...player});
+        return;
+      }
       updatePlayer({
         ...player,
         position: newPosition,
       });
     };
     const goBack = () => {
-      console.log('BACK', player.position);
       const pis = player.rotation[1] / Math.PI;
       let [xInc, yInc] = [0, 0];
       xInc = (pis % 1 === 0) ? (pis % 2 ? -1 : 1) : 0;
@@ -36,6 +44,10 @@ export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotati
         player.position[1],
         player.position[2] - yInc,
       ];
+      if (!isAvailablePosition(newPosition)) {
+        updatePlayer({...player});
+        return;
+      }
       updatePlayer({
         ...player,
         position: newPosition
@@ -99,6 +111,13 @@ export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotati
         updatePlayer({
           position: initialPosition,
           rotation: initialRotation,
+        });
+      },
+
+      setPosition: (position) => {
+        updatePlayer({
+          ...player,
+          position
         });
       },
 
