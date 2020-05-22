@@ -12,8 +12,9 @@ import { usePlayerController } from './hooks/usePlayerController'
 import { useHookWithRefCallback } from './hooks/useHookWithRefCallback'
 import { useSmoothMove } from './hooks/useSmoothMove'
 
+import useGlobal from "./store/store";
+
 import { delay } from './utils'
-import { useStores } from "./hooks/useStores";
 
 const boxPositions = [
   [0, 0, 0],
@@ -29,9 +30,6 @@ function Box({ isExpanded, ...props}) {
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false);
   const [active, setActive] = useState(false);
-
-  // // Rotate mesh every frame, this is outside of React without overhead
-  // useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01));
 
   return (
     <mesh
@@ -52,10 +50,12 @@ function Box({ isExpanded, ...props}) {
   );
 }
 
-function CustomBox({ pos, rot, ...props}) {
+function CustomBox({ ...props}) {
   const speed = 0.75;
   const group = useRef();
   const { nodes, materials, animations } = useLoader(GLTFLoader, '/box.glb');
+
+  const [state] = useGlobal();
 
   const [mixer] = useState(() => new THREE.AnimationMixer());
   useFrame((state, delta) => {
@@ -65,33 +65,28 @@ function CustomBox({ pos, rot, ...props}) {
   const { move, rotate } = useSmoothMove(group);
 
   useEffect(() => {
-    console.log('pos change');
     const animationAction = mixer.clipAction(animations[0], group.current);
     animationAction.loop = THREE.LoopOnce;
     animationAction.reset().play();
-    delay(200).then(() => move(pos));
-  }, [pos]);
+    delay(200).then(() => move(state.player.position));
+  }, [state.player.position]);
 
   useEffect(() => {
-    rotate(rot);
-  }, [rot])
+    rotate(state.player.rotation);
+  }, [state.player.rotation])
 
   return (<group ref={group} dispose={null} rotation={[0, 0, 0]} position={[0, 0.5, 0]} scale={[1, 1, 1]}>
       <mesh {...nodes.Cube}></mesh>
     </group>);
 }
 
-function Playground({ pos, rot }) {
+function Playground() {
   const [setRef] = useHookWithRefCallback();
-  const [currPos, setCurrPos] = useState(pos)
 
-  useEffect(() => {
-    setCurrPos(pos);
-  }, [pos])
   return (<group ref={setRef}>
     {boxPositions.map(boxPos => (<Box position={boxPos} />))}
     <Suspense fallback={null}>
-      <CustomBox pos={currPos} rot={rot}  />
+      <CustomBox />
     </Suspense>
   </group>);
 }
@@ -147,11 +142,9 @@ function Command({ type, handleClick }) {
 }
 
 function App(props) {
-  console.log('MobX store! ', useStores());
   const INITIAL_POSITION = [0, 0.5, 0];
   const INITIAL_ROTATION = [0, 0, 0];
   const {
-      player,
       reset,
       setChanges,
   } = usePlayerController(INITIAL_POSITION, INITIAL_ROTATION, boxPositions)
@@ -174,7 +167,7 @@ function App(props) {
         <Canvas colorManagement>
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          <Playground pos={player.position} rot={player.rotation} />
+          <Playground />
         </Canvas>
       </section>
       

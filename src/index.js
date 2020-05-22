@@ -4,15 +4,9 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-import { Store } from "./stores/Store";
-
-import { StoreProvider } from './hooks/useStores';
-
 ReactDOM.render(
   <React.StrictMode>
-    <StoreProvider value={new Store()}>
-      <App/>
-    </StoreProvider>
+    <App/>
   </React.StrictMode>,
   document.getElementById('root')
 );
