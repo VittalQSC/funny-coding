@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { delay } from '../utils';
 
-import useGlobal from '../store/store';
+import useGlobal from '../store';
 
 export function usePlayerController(initialPosition = [0, 0.5, 0], initialRotation = [0, 0, 0], availablePosition) {
     const [state, actions] = useGlobal();

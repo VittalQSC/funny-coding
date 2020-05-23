@@ -27,7 +27,7 @@ export const goFront = (store, availableXYpositions) => {
       store.state.player.position[2] + yInc,
     ];
     if (!isAvailablePosition(newPosition, availableXYpositions)) {
-        store.setState({ ...store });
+        store.setState({...store.state, player: {...store.state.player}});
       return;
     }
     store.setState({
@@ -50,8 +50,8 @@ export const goBack = (store, availableXYpositions) => {
       store.state.player.position[2] - yInc,
     ];
     if (!isAvailablePosition(newPosition, availableXYpositions)) {
-      store.setState({ ...store });
-      return;
+        store.setState({...store.state, player: {...store.state.player}});
+        return;
     }
     store.setState({
         ...store.state,
